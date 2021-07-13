@@ -1,6 +1,6 @@
 # node-checker - A Dwellir node monitoring tool
 
-Tries to upon a socket connection to IP:port. If it fails, report to [PagerDuty](https://www.pagerduty.com/).
+Tries to upen a socket connection to IP:port. If it fails, reports to [PagerDuty](https://www.pagerduty.com/).
 
 ## About 
 
