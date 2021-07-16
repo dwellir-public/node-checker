@@ -17,7 +17,7 @@ pip install .
 ```
 
 ## Usage
-`node-checker -c default.conf`  
+`node-checker -c example.conf`  
 This makes only one check per node and exits. Run this on schedule using e.g. cron or systemd.
 
 Instructions for config file:
