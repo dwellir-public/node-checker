@@ -18,8 +18,6 @@ pip install .
 
 ## Usage
 `node-checker -c example.conf`  
-This makes only one check per node and exits. Run this on schedule using e.g. cron or systemd.
-
 Instructions for config file:
 ```
 [PagerDuty]
@@ -30,6 +28,48 @@ service-id=ID of the service created on PagerDuty.
 [Nodes]
 node1=IP:port
 node2=IP:port
+```
+
+This makes only one check per node and exits. Run this on schedule using e.g. cron or systemd.
+
+Example using systemd with timer:  
+/home/ubuntu/node-checker/check.sh
+```
+#!/bin/bash
+set -e
+
+echo "RUNNING NODE-CHECKER"
+source env/bin/activate
+node-checker -c example.conf
+```
+/etc/systemd/system/nodechecker.service
+```
+[Unit]
+Description=Runs node-checker
+Wants=nodechecker.timer
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/ubuntu/node-checker
+ExecStart=/home/ubuntu/node-checker/check.sh
+
+[Install]
+WantedBy=multi-user.target
+```
+
+/etc/systemd/system/nodechecker.timer
+```
+[Unit]
+Description=Runs node-checker
+Wants=nodechecker.timer
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/ubuntu/node-checker
+ExecStart=/home/ubuntu/node-checker/check.sh
+
+[Install]
+WantedBy=multi-user.target
 ```
 
 ## Contributing
