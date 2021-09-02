@@ -1,6 +1,8 @@
 from argparse import ArgumentParser
 from configparser import ConfigParser
 import socket
+import asyncio
+import websockets
 from pdpyras import APISession
 
 def report_incident(node, config):
@@ -39,6 +41,18 @@ def check_nodes(config):
       print("FAILED connecting to endpoint {} {}".format(name, endpoint))
       report_incident(node, config)
 
+def check_websocket_nodes(config):
+  async def test_connection():
+    async with websockets.connect('wss://' + node[1], timeout=30) as websocket:
+        await websocket.send("")
+  for node in config.items('WebsocketNodes'):
+    try:
+      asyncio.get_event_loop().run_until_complete(test_connection())
+      print("SUCCESS connecting to endpoint {} ({})".format(node[0], node[1]))
+    except:
+      print("FAILED connecting to endpoint {} ({})".format(node[0], node[1]))
+      report_incident(node, config)
+
 def main():
   args_parser = ArgumentParser(prog='node-checker')
   args_parser.add_argument("-c", "--config", required=True, help="read config from a file")
@@ -51,7 +65,7 @@ def main():
       exit(0)
 
   check_nodes(config)
-
+  check_websocket_nodes(config)
 
 if __name__ == "__main__":
   main()

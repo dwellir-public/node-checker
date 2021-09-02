@@ -5,3 +5,5 @@ idna==2.10
 pdpyras==4.3.0
 requests==2.25.1
 urllib3==1.26.6
+asyncio==3.4.3
+websockets==9.1
