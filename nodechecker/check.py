@@ -4,6 +4,7 @@ import socket
 import asyncio
 import websockets
 from pdpyras import APISession
+import time
 
 def report_incident(node, config):
   api_token = config['PagerDuty'].get('api-token')
@@ -46,12 +47,21 @@ def check_websocket_nodes(config):
     async with websockets.connect('wss://' + node[1], timeout=30) as websocket:
         await websocket.send("")
   for node in config.items('WebsocketNodes'):
-    try:
-      asyncio.get_event_loop().run_until_complete(test_connection())
-      print("SUCCESS connecting to endpoint {} ({})".format(node[0], node[1]))
-    except:
-      print("FAILED connecting to endpoint {} ({})".format(node[0], node[1]))
-      report_incident(node, config)
+    # RPC node sometimes fails to open a websocket connection with log message:
+    # "Unable to build WebSocket connection WS Error <Capacity>: Unable to add another connection to the event loop"
+    # Assuming this is normal for a websocket service, retry a few times before reporting.
+    max_tries = 5
+    for current_try in range(max_tries):
+      try:
+        asyncio.get_event_loop().run_until_complete(test_connection())
+        print("SUCCESS connecting to endpoint {} ({})".format(node[0], node[1]))
+        break
+      except:
+        print("FAILED connecting to endpoint {} ({})".format(node[0], node[1]))
+        if current_try == max_tries-1:
+          report_incident(node, config)
+        else:
+          time.sleep(5)
 
 def main():
   args_parser = ArgumentParser(prog='node-checker')
