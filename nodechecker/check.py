@@ -37,9 +37,10 @@ def check_nodes(config):
     endpoint = (ip, int(port))
     try:
       node_socket.connect(endpoint)
-      print("SUCCESS connecting to endpoint {} {}".format(name, endpoint))
-    except:
-      print("FAILED connecting to endpoint {} {}".format(name, endpoint))
+      print("SUCCESS connecting to endpoint {} {}".format(name, endpoint), flush=True)
+    except Exception as e:
+      print("FAILED connecting to endpoint {} {}".format(name, endpoint), flush=True)
+      print(e, flush=True)
       report_incident(node, config)
 
 def check_websocket_nodes(config):
@@ -50,14 +51,15 @@ def check_websocket_nodes(config):
     # RPC node sometimes fails to open a websocket connection with log message:
     # "Unable to build WebSocket connection WS Error <Capacity>: Unable to add another connection to the event loop"
     # Assuming this is normal for a websocket service, retry a few times before reporting.
-    max_tries = 5
+    max_tries = 10
     for current_try in range(max_tries):
       try:
         asyncio.get_event_loop().run_until_complete(test_connection())
-        print("SUCCESS connecting to endpoint {} ({})".format(node[0], node[1]))
+        print("SUCCESS connecting to endpoint {} ({})".format(node[0], node[1]), flush=True)
         break
-      except:
-        print("FAILED connecting to endpoint {} ({})".format(node[0], node[1]))
+      except Exception as e:
+        print("FAILED connecting to endpoint {} ({})".format(node[0], node[1]), flush=True)
+        print(e, flush=True)
         if current_try == max_tries-1:
           report_incident(node, config)
         else:
@@ -71,7 +73,7 @@ def main():
   try:
     config.read_file(open(args.config))
   except Exception as exc:
-      print(f"Unable to read config: {str(exc)}")
+      print(f"Unable to read config: {str(exc)}", flush=True)
       exit(0)
 
   check_nodes(config)
