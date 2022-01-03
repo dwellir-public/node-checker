@@ -8,7 +8,17 @@ import time
 
 def report_incident(node, config):
   api_token = config['PagerDuty'].get('api-token')
+  if not api_token:
+    print("WARNING: no PagerDuty api token set!", flush=True)
+    return
   from_email = config['PagerDuty'].get('from-email')
+  if not from_email:
+    print("WARNING: no PagerDuty email set!", flush=True)
+    return
+  service_id = config['PagerDuty'].get('service-id')
+  if not service_id:
+    print("WARNING: no PagerDuty service id set!", flush=True)
+    return
   session = APISession(api_token, default_from=from_email)
 
   payload = {
@@ -16,7 +26,7 @@ def report_incident(node, config):
       "type": "incident",
       "title": "Node {} is offline!".format(node),
       "service": {
-        "id": config['PagerDuty'].get('service-id'),
+        "id": service_id,
         "type": "service_reference"
       },
       "body": {
@@ -45,21 +55,19 @@ def check_nodes(config):
 
 def check_websocket_nodes(config):
   async def test_connection():
-    async with websockets.connect('wss://' + node[1], timeout=30) as websocket:
-        await websocket.send("")
+    await asyncio.wait_for(websockets.connect('wss://' + node[1]), timeout=3)
   for node in config.items('WebsocketNodes'):
     # RPC node sometimes fails to open a websocket connection with log message:
     # "Unable to build WebSocket connection WS Error <Capacity>: Unable to add another connection to the event loop"
     # Assuming this is normal for a websocket service, retry a few times before reporting.
-    max_tries = 10
+    max_tries = 5
     for current_try in range(max_tries):
       try:
         asyncio.get_event_loop().run_until_complete(test_connection())
         print("SUCCESS connecting to endpoint {} ({})".format(node[0], node[1]), flush=True)
         break
-      except Exception as e:
+      except Exception:
         print("FAILED connecting to endpoint {} ({})".format(node[0], node[1]), flush=True)
-        print(e, flush=True)
         if current_try == max_tries-1:
           report_incident(node, config)
         else:
