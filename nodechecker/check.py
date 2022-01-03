@@ -8,7 +8,17 @@ import time
 
 def report_incident(node, config):
   api_token = config['PagerDuty'].get('api-token')
+  if not api_token:
+    print("WARNING: no PagerDuty api token set!", flush=True)
+    return
   from_email = config['PagerDuty'].get('from-email')
+  if not from_email:
+    print("WARNING: no PagerDuty email set!", flush=True)
+    return
+  service_id = config['PagerDuty'].get('service-id')
+  if not service_id:
+    print("WARNING: no PagerDuty service id set!", flush=True)
+    return
   session = APISession(api_token, default_from=from_email)
 
   payload = {
@@ -16,7 +26,7 @@ def report_incident(node, config):
       "type": "incident",
       "title": "Node {} is offline!".format(node),
       "service": {
-        "id": config['PagerDuty'].get('service-id'),
+        "id": service_id,
         "type": "service_reference"
       },
       "body": {
